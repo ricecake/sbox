@@ -1,0 +1,12 @@
+{application, sbox,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { sbox_app, []}},
+  {env, []}
+ ]}.
