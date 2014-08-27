@@ -1,6 +1,6 @@
 -module(sbox_utils).
 
--export([init/1, init_table/2, pad/2, crypt/2, decrypt/2, mk_key/1, passwd/0]).
+-export([init/1, init_table/2, pad/2, crypt/2, decrypt/2, mk_key/1, passwd/0, hash/1]).
 
 init_table(Table, Opts) ->
 	ok = case mnesia:create_table(Table, Opts) of
@@ -18,6 +18,8 @@ init([]) ->
 		_ -> error
 	end,
 	mnesia:start().
+
+hash(Data) when is_binary(Data) -> crypto:hash(sha256, Data).
 
 passwd() -> erlang:integer_to_binary(binary:decode_unsigned(crypto:rand_bytes(16)), 36).
 
