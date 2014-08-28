@@ -26,7 +26,7 @@ create(UserName, Password) ->
 			_  -> error
 		end
 	end),
-	{Result, UserData}.
+	{Result, prepData(UserName, Password, UserData)}.
 
 auth(UserName, Password) ->
 	{atomic, Result} = mnesia:transaction(fun()->
@@ -34,9 +34,13 @@ auth(UserName, Password) ->
 			[]     -> noauth;
 			[User = #user{salt=Salt, pass=Pass}] ->
 				case sbox_utils:hash(<< Salt/binary, Password/binary >>) of
-					Pass -> {auth, User};
+					Pass -> {auth, prepData(UserName, Password, User)};
 					_    -> noauth
 				end
 		end
 	end),
 	Result.
+
+prepData(UserName, Password, #user{syskey=SysKey, salt=Salt}) ->
+	{ok, RawKey} = sbox_utils:decrypt(sbox_utils:mk_key(Password), SysKey),
+	{UserName, Salt, RawKey}.

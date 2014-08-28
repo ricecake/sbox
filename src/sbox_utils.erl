@@ -1,9 +1,9 @@
 -module(sbox_utils).
 
--export([init/1, init_table/2, pad/2, crypt/2, decrypt/2, mk_key/1, passwd/0, hash/1]).
+-export([init/1, init_table/2, pad/2, crypt/2, decrypt/2, raw_decrypt/2, mk_key/1, passwd/0, hash/1]).
 
 init_table(Table, Opts) ->
-	ok = case mnesia:create_table(Table, Opts) of
+	ok = case mnesia:create_table(Table, [{disc_copies, [node()]} |Opts]) of
 		{atomic, ok} -> ok;
 		{aborted, {already_exists, Table}} -> ok;
 		{aborted, Reason} -> Reason
@@ -39,3 +39,7 @@ crypt(Key, Data) ->
 decrypt(Key, <<Iv:128/bits, Cipher/binary>>) ->
 	<< 16#deadbeef:32, Size:32, PlainText:Size/binary, _Padding/bits >> = crypto:block_decrypt(aes_cbc256, Key, Iv, Cipher),
 	{ok, PlainText}.
+
+raw_decrypt(Key, Data) ->
+	{ok, PlainText} = decrypt(Key, Data),
+	PlainText.
