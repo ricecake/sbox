@@ -1,6 +1,6 @@
 -module(sbox_user).
 
--export([init/0, create/2]).
+-export([init/0, create/2, auth/2]).
 
 -record(user, {
 	user,
@@ -26,4 +26,17 @@ create(UserName, Password) ->
 			_  -> error
 		end
 	end),
-	{Result, UserName}.
+	{Result, UserData}.
+
+auth(UserName, Password) ->
+	{atomic, Result} = mnesia:transaction(fun()->
+		case mnesia:read({user, sbox_utils:hash(UserName)}) of
+			[]     -> noauth;
+			[User = #user{salt=Salt, pass=Pass}] ->
+				case sbox_utils:hash(<< Salt/binary, Password/binary >>) of
+					Pass -> {auth, User};
+					_    -> noauth
+				end
+		end
+	end),
+	Result.
