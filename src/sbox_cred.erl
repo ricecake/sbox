@@ -26,9 +26,14 @@ create({UserName, Salt, RawKey}, System, Details) ->
 list({UserName, Salt, RawKey}) ->
 	SecOwn = sbox_utils:hash(<< Salt/binary, UserName/binary >>),
 	{atomic, Creds} = mnesia:transaction(fun()->
-		[ {sbox_utils:raw_decrypt(RawKey, Row#cred.system), sbox_utils:raw_decrypt(RawKey, Row#cred.details)} || Row <- mnesia:match_object(#cred{owner=SecOwn, _='_'})]
+		[sbox_utils:raw_decrypt(RawKey, Row#cred.system) || Row <- mnesia:match_object(#cred{owner=SecOwn, _='_'})]
 	end),
 	{ok, Creds}.
 
 
-get({UserName, Salt, RawKey}, System) -> ok.
+get({UserName, Salt, RawKey} = Cred, System) ->
+	CredList = list(Cred),
+	case proplists:get_value(System, CredList) of
+		undefined -> undefined;
+		Details   -> sbox_utils:decrypt(RawKey, Details)
+	end.

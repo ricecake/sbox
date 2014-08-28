@@ -33,7 +33,7 @@ crypt(Key, Data) ->
 	Prepped = << 16#deadbeef:32, (size(Data)):32, Data/binary >>,
 	Packed  = pad(16, Prepped),
 	Iv      = crypto:rand_bytes(16),
-	Cipher  = (crypto:block_encrypt(aes_cbc256, Key, Iv, Packed)),
+	Cipher  = crypto:block_encrypt(aes_cbc256, Key, Iv, Packed),
 	{ok, << Iv:128/bits, Cipher/binary >>}.
 
 decrypt(Key, <<Iv:128/bits, Cipher/binary>>) ->
