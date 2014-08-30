@@ -3,21 +3,24 @@
 -export([init/0, create/3, list/1, get/2]).
 
 -record(cred, {
-	system,
+	id,
 	owner,
+	system,
 	details
 }).
 
 init() -> sbox_utils:init_table(cred,   [{attributes, record_info(fields, cred)}]).
 
 create({UserName, Salt, RawKey}, System, Details) ->
+	Id     = sbox_utils:hash(<< Salt/binary, System/binary >>),
 	SecOwn = sbox_utils:hash(<< Salt/binary, UserName/binary >>),
 	{ok, SecSys} = sbox_utils:crypt(RawKey, System),
 	{ok, SecDet} = sbox_utils:crypt(RawKey, Details),
 	{atomic, Result}  = mnesia:transaction(fun()->
 		mnesia:write(#cred{
-			system =SecSys,
+			id     =Id,
 			owner  =SecOwn,
+			system =SecSys,
 			details=SecDet
 		})
 	end),
@@ -31,9 +34,12 @@ list({UserName, Salt, RawKey}) ->
 	{ok, Creds}.
 
 
-get({UserName, Salt, RawKey} = Cred, System) ->
-	CredList = list(Cred),
-	case proplists:get_value(System, CredList) of
-		undefined -> undefined;
-		Details   -> sbox_utils:decrypt(RawKey, Details)
-	end.
+get({_UserName, Salt, RawKey}, System) ->
+	Id     = sbox_utils:hash(<< Salt/binary, System/binary >>),
+	{atomic, Cred} = mnesia:transaction(fun()->
+		case mnesia:read({cred, Id}) of
+			[]    -> undefined;
+			[Row] -> sbox_utils:decrypt(RawKey, Row#cred.details)
+		end
+	end),
+	Cred.
