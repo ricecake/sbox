@@ -20,7 +20,13 @@
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, dict:new(), []).
+
+auth(User, IP, Pass) ->
+	gen_server:call(?SERVER, {auth, {User, IP, Pass, timestamp()}}).
+
+expire(User, IP) ->
+	gen_server:call(?SERVER, {expire, {User, IP}}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -28,6 +34,14 @@ start_link() ->
 
 init(Args) ->
     {ok, Args}.
+
+handle_call({auth, {User, IP, Pass, Time} = Attempt}, State) ->
+	Auth = case dict:find(Key, Dict) of
+		{ok, Value} -> checkLimit(Attempt, Value);
+		error       -> checkAuth(Attempt)
+	end,
+	NewState = dict:store({User, IP}, {Time, Auth}, State),
+	{reply, {ok, Auth}, NewState}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -48,3 +62,10 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+createOrReturn(Dict, Key, Default) ->
+	case dict:find(Key, Dict) of
+		{ok, Value} -> {Dict, Value};
+		error       -> {dict:store(Key, Default, Dict), Default}
+	end.
+
+timestamp() -> {Mega, Secs, Micro} = erlang:now(),  Mega*1000*1000*1000*1000 + Secs * 1000 * 1000 + Micro.
