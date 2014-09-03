@@ -12,6 +12,7 @@ Rules.
 {C}      : {token, {set,   atom(TokenChars)}}.
 {L}+     : {token, {label, input(TokenChars)}}.
 {SEP}    : {token, {sep,   input(TokenChars)}}.
+<>       : {token, {readline}}.
 "{S}+"   : {token, {string,input(strip(1, TokenChars, TokenLen))}}.
 '{S}+'   : {token, {string,input(strip(1, TokenChars, TokenLen))}}.
 <<{S}+>> : {token, {string,input(strip(2, TokenChars, TokenLen))}}.
