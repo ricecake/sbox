@@ -37,11 +37,17 @@ init(Args) ->
 
 handle_call({auth, {User, _Pass, Time} = Attempt}, _From, State) ->
 	Auth = case dict:find(User, State) of
-		{ok, Value} -> checkLimit(Attempt, Value);
+		{ok, {Value, Tref}} ->
+				{ok, cancel} = timer:cancel(Tref),
+				checkLimit(Attempt, Value);
 		error       -> checkAuth(Attempt)
 	end,
-	NewState = dict:store(User, {Time, Auth}, State),
+	{ok, Timer} = timer:apply_after(5000, ?MODULE, expire, [User]),
+	NewState = dict:store(User, {{Time, Auth}, Timer}, State),
 	{reply, {ok, Auth}, NewState};
+handle_call({expire, User}, _From, State) ->
+	NewState = dict:erase(User, State),
+	{reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
