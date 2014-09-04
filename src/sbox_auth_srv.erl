@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/0, auth/2, expire/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -22,11 +22,11 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, dict:new(), []).
 
-auth(User, IP, Pass) ->
-	gen_server:call(?SERVER, {auth, {User, IP, Pass, timestamp()}}).
+auth(User, Pass) ->
+	gen_server:call(?SERVER, {auth, {User, Pass, timestamp()}}).
 
-expire(User, IP) ->
-	gen_server:call(?SERVER, {expire, {User, IP}}).
+expire(User) ->
+	gen_server:call(?SERVER, {expire, User}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -35,14 +35,13 @@ expire(User, IP) ->
 init(Args) ->
     {ok, Args}.
 
-handle_call({auth, {User, IP, Pass, Time} = Attempt}, State) ->
-	Auth = case dict:find(Key, Dict) of
+handle_call({auth, {User, _Pass, Time} = Attempt}, _From, State) ->
+	Auth = case dict:find(User, State) of
 		{ok, Value} -> checkLimit(Attempt, Value);
 		error       -> checkAuth(Attempt)
 	end,
-	NewState = dict:store({User, IP}, {Time, Auth}, State),
-	{reply, {ok, Auth}, NewState}.
-
+	NewState = dict:store(User, {Time, Auth}, State),
+	{reply, {ok, Auth}, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -62,10 +61,9 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-createOrReturn(Dict, Key, Default) ->
-	case dict:find(Key, Dict) of
-		{ok, Value} -> {Dict, Value};
-		error       -> {dict:store(Key, Default, Dict), Default}
-	end.
+timestamp() -> {Mega, Secs, _Micro} = erlang:now(),  Mega*1000*1000 + Secs.
 
-timestamp() -> {Mega, Secs, Micro} = erlang:now(),  Mega*1000*1000*1000*1000 + Secs * 1000 * 1000 + Micro.
+checkLimit({_User, _Pass, Time}, {LastTime, _Auth}) when Time < LastTime + 5 -> noauth;
+checkLimit(Attempt, _Cached) -> checkAuth(Attempt).
+
+checkAuth({User, Pass, _Time}) -> sbox_user:auth(User, Pass).
