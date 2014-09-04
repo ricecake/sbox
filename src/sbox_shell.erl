@@ -10,7 +10,7 @@ listen(Port) ->
     listen(Port, [{system_dir, "/home/ricecake/Projects/sbox/ssh"}]).
 
 listen(Port, Options) ->
-    ssh:daemon(any, Port, [{pwdfun, fun(User, Pass)-> true end}, {shell, fun(U, H) -> start_shell(U, H) end} | Options]).
+    ssh:daemon(Port, [{pwdfun, fun(User, Pass)-> true end}, {shell, fun(U, H) -> start_shell(U, H) end} | Options]).
 
 %%% spawns out shell loop, we use plain io to input and output
 %%% over ssh (the group module is our group leader, and takes
@@ -36,4 +36,4 @@ shell_loop({User, Peer}) ->
 	    shell_loop({User, Peer})
     end.
 
-eval_cli(Line) -> sbox_command_tokenizer:line(Line).
+eval_cli(Line) -> sbox_command_tokenizer:string(Line).
