@@ -22,9 +22,9 @@ start_shell(User, Peer) ->
 	  end).
 
 %%% an ordinary Read-Eval-Print-loop
-shell_loop({User, Peer}) ->
+shell_loop({User, {IP, _Port} = Peer}) ->
     % Read
-    Line = io:get_line("CLI> "),
+    Line = io:get_line(io_lib:format("~s@~s >> ", [User, inet_parse:ntoa(IP)])),
     % Eval
     Result = eval_cli(Line),
     % Print
