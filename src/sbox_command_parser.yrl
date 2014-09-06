@@ -1,10 +1,9 @@
 Nonterminals
-predicates predicate list element elements.
+statement params kv_pair kv_pairs.
 
-Terminals '(' ')' ','
-atom var integer string set union intersection comparator.
+Terminals label string set sep readline.
 
-Rootsymbol predicates.
+Rootsymbol statement.
 
 Erlang code.
 

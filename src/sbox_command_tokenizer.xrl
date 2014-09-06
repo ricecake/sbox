@@ -8,7 +8,6 @@ SEP = (,|;)
 
 Rules.
 
-{Q}      : {token, {quote, atom(TokenChars)}}.
 {C}      : {token, {set,   atom(TokenChars)}}.
 {L}+     : {token, {label, input(TokenChars)}}.
 {SEP}    : {token, {sep,   input(TokenChars)}}.
