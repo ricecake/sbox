@@ -19,6 +19,7 @@ init([]) ->
 	end,
 	mnesia:start().
 
+hash(Data) when is_list(Data) -> hash(list_to_binary(Data));
 hash(Data) when is_binary(Data) -> crypto:hash(sha256, Data).
 
 passwd() -> erlang:integer_to_binary(binary:decode_unsigned(crypto:rand_bytes(16)), 36).
