@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, auth/2, expire/1]).
+-export([start_link/0, auth/2, expire/1, fetch/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -24,6 +24,9 @@ start_link() ->
 
 auth(User, Pass) ->
 	gen_server:call(?SERVER, {auth, {User, Pass, timestamp()}}).
+
+fetch(User) ->
+	gen_server:call(?SERVER, {fetch, User}).
 
 expire(User) ->
 	gen_server:call(?SERVER, {expire, User}).
@@ -44,7 +47,13 @@ handle_call({auth, {User, _Pass, Time} = Attempt}, _From, State) ->
 	end,
 	{ok, Timer} = timer:apply_after(5000, ?MODULE, expire, [User]),
 	NewState = dict:store(User, {{Time, Auth}, Timer}, State),
-	{reply, {ok, Auth}, NewState};
+	Result = case Auth of
+		noauth -> false;
+		_      -> true
+	end,
+	{reply, {ok, Result}, NewState};
+handle_call({fetch, User}, _From, State) ->
+	{reply, {ok, dict:fetch(User, State)}, State};
 handle_call({expire, User}, _From, State) ->
 	NewState = dict:erase(User, State),
 	{reply, ok, NewState};
