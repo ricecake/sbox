@@ -1,7 +1,7 @@
 -module(sbox_shell).
 
 %% api
--export([listen/1, listen/2]).
+-export([listen/1, listen/2, start_shell/2]).
 
 %% %% our shell function
 %-export([start_shell/1]).

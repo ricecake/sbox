@@ -12,8 +12,8 @@
 init() -> sbox_utils:init_table(cred,   [{attributes, record_info(fields, cred)}]).
 
 create({UserName, Salt, RawKey}, System, Details) ->
-	Id     = sbox_utils:hash(<< Salt/binary, System/binary >>),
-	SecOwn = sbox_utils:hash(<< Salt/binary, UserName/binary >>),
+	Id     = sbox_utils:hash(Salt, System),
+	SecOwn = sbox_utils:hash(Salt, UserName),
 	{ok, SecSys} = sbox_utils:crypt(RawKey, System),
 	{ok, SecDet} = sbox_utils:crypt(RawKey, Details),
 	{atomic, Result}  = mnesia:transaction(fun()->
@@ -27,7 +27,7 @@ create({UserName, Salt, RawKey}, System, Details) ->
 	Result.
 
 list({UserName, Salt, RawKey}) ->
-	SecOwn = sbox_utils:hash(<< Salt/binary, UserName/binary >>),
+	SecOwn = sbox_utils:hash(Salt, UserName),
 	{atomic, Creds} = mnesia:transaction(fun()->
 		[sbox_utils:raw_decrypt(RawKey, Row#cred.system) || Row <- mnesia:match_object(#cred{owner=SecOwn, _='_'})]
 	end),
@@ -35,7 +35,7 @@ list({UserName, Salt, RawKey}) ->
 
 
 get({_UserName, Salt, RawKey}, System) ->
-	Id     = sbox_utils:hash(<< Salt/binary, System/binary >>),
+	Id     = sbox_utils:hash(Salt, System),
 	{atomic, Cred} = mnesia:transaction(fun()->
 		case mnesia:read({cred, Id}) of
 			[]    -> undefined;

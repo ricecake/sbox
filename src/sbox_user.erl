@@ -18,7 +18,7 @@ create(UserName, Password) ->
 	{ok, SecSalt} = sbox_utils:crypt(sbox_utils:mk_key(Password), crypto:rand_bytes(16)),
 	UserData = #user{
 		user=sbox_utils:hash(UserName),
-		pass=sbox_utils:hash(<< Salt/binary, Password/binary >>),
+		pass=sbox_utils:hash(Salt, Password),
 		salt=Salt,
 		secsalt=SecSalt,
 		syskey=SysKey
@@ -36,7 +36,7 @@ auth(UserName, Password) ->
 		case mnesia:read({user, sbox_utils:hash(UserName)}) of
 			[]     -> noauth;
 			[User = #user{salt=Salt, pass=Pass}] ->
-				case sbox_utils:hash(<< Salt/binary, Password/binary >>) of
+				case sbox_utils:hash(Salt, Password) of
 					Pass -> {auth, prepData(UserName, Password, User)};
 					_    -> noauth
 				end
