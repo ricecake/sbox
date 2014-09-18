@@ -41,4 +41,6 @@ shell_loop({User, {IP, _Port} = Peer}, Auth) ->
 	    shell_loop({User, Peer}, Auth)
     end.
 
-eval_cli(Line, _Auth) -> sbox_command_tokenizer:string(Line).
+eval_cli(Line, _Auth) ->
+	{ok, Tokens, _} = sbox_command_tokenizer:string(Line),
+	sbox_command_parser:parse(Tokens).
