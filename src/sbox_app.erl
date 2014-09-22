@@ -10,7 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    sbox_sup:start_link().
+	ok = sbox:init(),
+	sbox_sup:start_link().
 
 stop(_State) ->
     ok.

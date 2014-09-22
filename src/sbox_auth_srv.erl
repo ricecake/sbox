@@ -36,7 +36,8 @@ expire(User) ->
 %% ------------------------------------------------------------------
 
 init(Args) ->
-    {ok, Args}.
+	self() ! {start, ssh_shell},
+	{ok, Args}.
 
 handle_call({auth, {User, _Pass, Time} = Attempt}, _From, State) ->
 	Auth = case dict:find(User, State) of
@@ -63,6 +64,9 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info({start, ssh_shell}, State) ->
+	{ok, _pid} = ssh_shell:listen(8888),
+	{noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
